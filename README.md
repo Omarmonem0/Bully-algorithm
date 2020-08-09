@@ -47,7 +47,8 @@ it starts the election algorithm throgh sending an election message to process l
 7- Election begins.
 
 ### Interprocess communication
-Process communication is done through sockets programming 
+Process communication is done through sockets programming, I used socket programming because i found it the most relevant solution for this problem because
+it frees me from synchronization and locks complexity.
 
 ### Environment
 OS : Ubuntu 18.04.4 LTS
