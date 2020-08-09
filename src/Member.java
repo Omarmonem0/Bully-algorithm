@@ -91,16 +91,16 @@ public class Member {
     public void send(String messageType,int port) throws IOException, InterruptedException {
         Message message = null;
         switch (messageType){
-            case "PING":
+            case Constants.ping:
                 message = new Ping("");
                 break;
-            case "WINNER":
+            case Constants.winner:
                 message = new Winner(Long.toString(this.getPid()));
                 break;
             default:
                 break;
         }
-        Socket socket = new Socket("127.0.0.1", port);
+        Socket socket = new Socket(Constants.host, port);
         ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
         ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
         output.writeObject(message);
@@ -126,11 +126,9 @@ public class Member {
     }
 
     public void sendWinnerMessage() throws IOException, InterruptedException {
-        System.out.println(Arrays.toString(this.liveMembers.toArray()));
-        System.out.println("I will send");
         for (Object port: this.liveMembers) {
             System.out.println("[" + this.pid + "] send winner message to " + Integer.parseInt(port.toString()));
-            send("WINNER", Integer.parseInt(port.toString()));
+            send(Constants.winner, Integer.parseInt(port.toString()));
             Thread.sleep(100);
         }
     }
@@ -139,7 +137,7 @@ public class Member {
         for (Object port: this.liveMembers.toArray()) {
             if(Integer.parseInt(port.toString()) > this.port) {
                 System.out.println("[" + this.pid + "] sending PING to process on port " + Integer.parseInt(port.toString()));
-                this.send("PING", Integer.parseInt(port.toString()));
+                this.send(Constants.ping, Integer.parseInt(port.toString()));
                 Thread.sleep(100);
             }
         }

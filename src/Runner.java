@@ -48,7 +48,7 @@ public class Runner {
     public static void terminateRunningProcess(int port) throws IOException, InterruptedException, ClassNotFoundException {
         Message message = new Terminate("");
         System.out.println("[Runner]: Sending termination message to process running on port " + port);
-        Socket socket = new Socket("127.0.0.1" , port);
+        Socket socket = new Socket(Constants.host , port);
         ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
         ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
         output.writeObject(message);
@@ -63,7 +63,7 @@ public class Runner {
             if(targetPort != killedProcess) {
                 Message message = new Update(Integer.toString(killedProcess));
                 System.out.println("[Runner]: sending notification" + " to port " + targetPort + " to delete " + killedProcess);
-                Socket socket = new Socket("127.0.0.1" , targetPort);
+                Socket socket = new Socket(Constants.host , targetPort);
                 ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
                 ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
                 output.writeObject(message);

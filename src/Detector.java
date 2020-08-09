@@ -17,7 +17,7 @@ public class Detector {
                 int targetPort = initialPort + i;
                 Ping pingMessage = new Ping("From Detector");
                 System.out.println("[Detector]: Hi " + targetPort + " Are you alive?");
-                Socket socket = new Socket("127.0.0.1" , targetPort);
+                Socket socket = new Socket(Constants.host , targetPort);
                 ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
                 ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
                 output.writeObject(pingMessage);
@@ -38,7 +38,7 @@ public class Detector {
 
     public static void sendStartElectionMessage() throws IOException, ClassNotFoundException, InterruptedException {
         Message message = new Election("");
-        Socket socket = new Socket("127.0.0.1", 3001);
+        Socket socket = new Socket(Constants.host, 3001);
         ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
         ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
         output.writeObject(message);
