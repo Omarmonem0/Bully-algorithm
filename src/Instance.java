@@ -12,8 +12,8 @@ public class Instance {
         ServerSocket serverSocket = null;
         try {
             serverSocket = new ServerSocket(member.getPort());
-            System.out.println("process with id: " + member.getPid() + "is running on port: " + member.getPort());
-            System.out.println("------------------------------------");
+            System.out.println("[" + member.getPid() + "] is running on port: " + member.getPort());
+            printLine();
             while(true) {
                 Socket socket = serverSocket.accept();
                 ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
@@ -22,8 +22,13 @@ public class Instance {
                 String messageType = message.getType();;
                 switch (messageType){
                     case "PING":
-                        Message response = new Ping(member.getIsDown() ? "yes" : "no");
-                        output.writeObject(response);
+                        if(message.getPayload().equals("From Detector")){
+                            Message response = new Ping(member.getIsDown() ? "no" : "yes");
+                            output.writeObject(response);
+                        } else {
+                            member.startElection();
+                            output.writeObject("started");
+                        }
                         break;
                     case "EXIT" :
                         member.setIsDown(true);
@@ -32,6 +37,18 @@ public class Instance {
                     case "UPDATE":
                         member.removeKilledMember(Integer.parseInt(message.getPayload()));
                         output.writeObject("done");
+                        break;
+                    case "ELECTION":
+                        System.out.println("[" + member.getPid() + "] I will start new election now");
+                        printLine();
+                        member.startElection();
+                        break;
+                    case "WINNER":
+                        System.out.println("Winner message");
+                        member.setLeaderId(message.getPayload());
+                        System.out.println("[" + member.getPid() + "]: All hail to the new king");
+                        printLine();
+                        break;
                     default:
                         break;
                 }
@@ -39,8 +56,12 @@ public class Instance {
                 output.close();
                 socket.close();
             }
-        } catch (IOException | ClassNotFoundException e) {
+        } catch (IOException | ClassNotFoundException | InterruptedException e) {
             e.printStackTrace();
         }
+    }
+
+    public static void printLine(){
+        System.out.println("--------------------");
     }
 }

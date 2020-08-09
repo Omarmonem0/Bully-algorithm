@@ -1,6 +1,10 @@
+import javax.swing.plaf.TableHeaderUI;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.net.Socket;
 import java.util.Arrays;
 import java.util.LinkedList;
-import java.util.List;
 
 public class Member {
     private long pid;
@@ -9,9 +13,18 @@ public class Member {
     private int port;
     private int totalNumberOfMembers;
     private LinkedList liveMembers;
+    private String leaderId;
 
     public long getPid() {
         return  this.pid;
+    }
+
+    public String getLeaderId() {
+        return leaderId;
+    }
+
+    public void setLeaderId(String leaderId) {
+        this.leaderId = leaderId;
     }
 
     public boolean getLeader() {
@@ -28,7 +41,7 @@ public class Member {
 
     public void setIsDown(boolean isDown) {
         this.isDown = isDown;
-        System.out.println("process with id " + this.getPid() + " terminated");
+        System.out.println("[" + this.getPid() + "] terminated");
     }
 
     public void setPort(int port) {
@@ -51,22 +64,85 @@ public class Member {
         System.out.println("Leader: " + this.leader);
         System.out.println("Is down: " + this.isDown);
         System.out.println("Port: " + this.port);
-        System.out.println("Active members: " + Arrays.toString(this.liveMembers.toArray()));
     }
+
     public LinkedList getMembersPorts() {
         LinkedList ports = new LinkedList<>();
         int maximumPort = 3000 + this.totalNumberOfMembers;
         for (int i = 1; i + 3000 <= maximumPort; i++) {
-            if (this.port != i + 3000) {
+            if (i + 3000  != this.port) {
                 ports.add(i + 3000);
             }
         }
         return ports;
     }
 
+    public void startElection() throws IOException, InterruptedException {
+        if(this.checkForMaximumProcessId()){
+            System.out.println("Process with id: " + this.pid + " is the new leader");
+            this.setLeader(true);
+            this.setLeaderId("-");
+            this.sendWinnerMessage();
+            return;
+        }
+        this.pingAll();
+    }
+
+    public void send(String messageType,int port) throws IOException, InterruptedException {
+        Message message = null;
+        switch (messageType){
+            case "PING":
+                message = new Ping("");
+                break;
+            case "WINNER":
+                message = new Winner(Long.toString(this.getPid()));
+                break;
+            default:
+                break;
+        }
+        Socket socket = new Socket("127.0.0.1", port);
+        ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+        ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
+        output.writeObject(message);
+        socket.close();
+        input.close();
+        output.close();
+        Thread.sleep(100);
+    }
+
+    public boolean checkForMaximumProcessId() {
+        int max = this.port;
+        for (Object port: this.liveMembers) {
+            if(Integer.parseInt(port.toString()) > max){
+                max = Integer.parseInt(port.toString());
+            }
+        }
+        return max == this.port ? true : false;
+    }
+
     public void removeKilledMember(int port) {
         this.liveMembers.removeFirstOccurrence(port);
-        System.out.println("I'm [" + this.pid + "] process with port: " + port + " is removed from my list my new list : " + Arrays.toString(this.liveMembers.toArray()));
+        System.out.println("[" + this.pid + "] process with port: " + port + " is removed from my list my new list : " + Arrays.toString(this.liveMembers.toArray()));
+    }
+
+    public void sendWinnerMessage() throws IOException, InterruptedException {
+        System.out.println(Arrays.toString(this.liveMembers.toArray()));
+        System.out.println("I will send");
+        for (Object port: this.liveMembers) {
+            System.out.println("[" + this.pid + "] send winner message to " + Integer.parseInt(port.toString()));
+            send("WINNER", Integer.parseInt(port.toString()));
+            Thread.sleep(100);
+        }
+    }
+
+    public void pingAll() throws IOException, InterruptedException {
+        for (Object port: this.liveMembers.toArray()) {
+            if(Integer.parseInt(port.toString()) > this.port) {
+                System.out.println("[" + this.pid + "] sending PING to process on port " + Integer.parseInt(port.toString()));
+                this.send("PING", Integer.parseInt(port.toString()));
+                Thread.sleep(100);
+            }
+        }
     }
 
 }

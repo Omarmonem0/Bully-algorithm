@@ -15,18 +15,36 @@ public class Detector {
         while (true) {
             for(int i = 1; i <= numberOfMembers; i++ ){
                 int targetPort = initialPort + i;
-                Ping pingMessage = new Ping("");
-                System.out.println("Sending " + pingMessage.getType() + " to port " + targetPort);
+                Ping pingMessage = new Ping("From Detector");
+                System.out.println("[Detector]: Hi " + targetPort + " Are you alive?");
                 Socket socket = new Socket("127.0.0.1" , targetPort);
                 ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
                 ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
                 output.writeObject(pingMessage);
-                Message message = (Message) input.readObject();
-                System.out.println(message.getPayload());
+                Message response = (Message) input.readObject();
+                System.out.println("[" + targetPort + "]:" + response.getPayload());
+                if(response.getPayload() == "no") {
+                    break;
+                }
                 input.close();
                 output.close();
                 Thread.sleep(100);
             }
+            System.out.println("--------------------");
+            break;
         }
-        }
+        Detector.sendStartElectionMessage();
+    }
+
+    public static void sendStartElectionMessage() throws IOException, ClassNotFoundException, InterruptedException {
+        Message message = new Election("");
+        Socket socket = new Socket("127.0.0.1", 3001);
+        ObjectOutputStream output = new ObjectOutputStream(socket.getOutputStream());
+        ObjectInputStream input = new ObjectInputStream(socket.getInputStream());
+        output.writeObject(message);
+        socket.close();
+        input.close();
+        output.close();
+        Thread.sleep(100);
+    }
 }
